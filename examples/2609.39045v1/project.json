@@ -1,0 +1,254 @@
+{
+ "source_pdf": "../../../2609.39045v1.pdf",
+ "work_dir": "work",
+ "latex_dir": "tex",
+ "fonts_dir": "../../fonts",
+ "translations": "figtrans.py",
+ "output_pdf": "work/2609.39045v1_zh.pdf",
+ "body_font_prefixes": [
+  "Nimbus",
+  "CM"
+ ],
+ "auto_align_rules": [
+  {
+   "_comment": "案例卡片：左侧阶段小标签居中，右上角标签右对齐",
+   "figs": [
+    "F11",
+    "F12",
+    "F14",
+    "F15",
+    "F17",
+    "F18"
+   ],
+   "size": 3.8,
+   "tol": 0.15,
+   "not_color": "ffffff",
+   "x0_lt": 162,
+   "align_if": "c",
+   "align_else": "r"
+  }
+ ],
+ "figures": [
+  {
+   "name": "logos",
+   "page": 1,
+   "rect": [
+    108,
+    22,
+    504,
+    42
+   ],
+   "translate": false
+  },
+  {
+   "name": "hf",
+   "page": 1,
+   "rect": [
+    269.5,
+    451.5,
+    281.5,
+    462.5
+   ],
+   "translate": false
+  },
+  {
+   "name": "fig1",
+   "page": 1,
+   "rect": [
+    108,
+    474,
+    504,
+    605
+   ],
+   "translate": false
+  },
+  {
+   "name": "fig2",
+   "page": 3,
+   "rect": [
+    110,
+    82,
+    502,
+    328
+   ],
+   "translate": false
+  },
+  {
+   "name": "F3",
+   "page": 7,
+   "rect": [
+    108,
+    84,
+    504,
+    193
+   ],
+   "translate": true
+  },
+  {
+   "name": "F4",
+   "page": 7,
+   "rect": [
+    108,
+    266,
+    504,
+    366
+   ],
+   "translate": true
+  },
+  {
+   "name": "F5",
+   "page": 8,
+   "rect": [
+    108,
+    82,
+    504,
+    182
+   ],
+   "translate": true
+  },
+  {
+   "name": "fig6",
+   "page": 18,
+   "rect": [
+    108,
+    84,
+    504,
+    353
+   ],
+   "translate": false
+  },
+  {
+   "name": "fig7",
+   "page": 19,
+   "rect": [
+    108,
+    84,
+    504,
+    251
+   ],
+   "translate": false
+  },
+  {
+   "name": "fig8",
+   "page": 20,
+   "rect": [
+    152,
+    84,
+    460,
+    267
+   ],
+   "translate": false
+  },
+  {
+   "name": "fig9",
+   "page": 31,
+   "rect": [
+    326,
+    201,
+    500,
+    291
+   ],
+   "translate": false
+  },
+  {
+   "name": "F10",
+   "page": 35,
+   "rect": [
+    108,
+    404,
+    504,
+    606
+   ],
+   "translate": true
+  },
+  {
+   "name": "F11",
+   "page": 36,
+   "rect": [
+    118,
+    162,
+    494,
+    616
+   ],
+   "translate": true
+  },
+  {
+   "name": "F12",
+   "page": 37,
+   "rect": [
+    118,
+    82,
+    494,
+    569
+   ],
+   "translate": true
+  },
+  {
+   "name": "F13",
+   "page": 38,
+   "rect": [
+    108,
+    242,
+    504,
+    443
+   ],
+   "translate": true
+  },
+  {
+   "name": "F14",
+   "page": 39,
+   "rect": [
+    118,
+    82,
+    494,
+    536
+   ],
+   "translate": true
+  },
+  {
+   "name": "F15",
+   "page": 40,
+   "rect": [
+    118,
+    82,
+    494,
+    546
+   ],
+   "translate": true
+  },
+  {
+   "name": "F16",
+   "page": 41,
+   "rect": [
+    108,
+    151,
+    504,
+    352
+   ],
+   "translate": true
+  },
+  {
+   "name": "F17",
+   "page": 42,
+   "rect": [
+    118,
+    82,
+    494,
+    556
+   ],
+   "translate": true
+  },
+  {
+   "name": "F18",
+   "page": 43,
+   "rect": [
+    118,
+    82,
+    498,
+    397
+   ],
+   "translate": true
+  }
+ ],
+ "_note": "本示例复现已交付版本，其中矢量图做了图内文字翻译（可选模式，figures[].translate=true）。默认做法应是所有图保留原图、只翻译图注：把 translate 全部设为 false 即可。"
+}

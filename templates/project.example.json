@@ -1,0 +1,16 @@
+{
+ "_说明": "路径均相对本文件。figures 的顺序即 figs.pdf 的页序（LaTeX 中 \\fig{N}）。rect 为原 PDF 坐标 [x0,y0,x1,y1]（pt，左上原点）。",
+ "source_pdf": "../paper.pdf",
+ "work_dir": "work",
+ "latex_dir": "tex",
+ "fonts_dir": "../paper-translate-zh/fonts",
+ "translations": "figtrans.py",
+ "output_pdf": "../paper_zh.pdf",
+ "body_font_prefixes": ["Nimbus", "CM"],
+ "figures": [
+  {"name": "logos", "page": 1, "rect": [108, 22, 504, 42]},
+  {"name": "fig1",  "page": 1, "rect": [108, 474, 504, 605]},
+  {"name": "fig2",  "page": 3, "rect": [110, 82, 502, 328]}
+ ],
+ "auto_align_rules": []
+}

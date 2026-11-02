@@ -1,0 +1,64 @@
+\input{preamble}
+\hypersetup{pdftitle={（中文标题）}}
+\newcommand{\sysname}{SystemName}   % 论文中反复出现的系统名，按原文格式（如 RSIG\textsc{ame}）
+
+\begin{document}
+\thispagestyle{firstpage}   % 原文无 logo 条则删去此行及 preamble 中的 firstpage 样式
+
+{\raggedright
+{\LARGE\bfseries 中文标题第一行\\[2pt]第二行\par}
+\vspace{4pt}
+{\large\textsc{Original English Title}\par}
+\vspace{12pt}
+\hspace*{0.2in}\parbox{5in}{\linespread{1.0}\selectfont
+\textbf{Author One}$^{1*}$\quad \textbf{Author Two}$^{2}$\\[2pt]
+$^{1}$机构一\quad $^{2}$机构二}
+\par}
+
+\vspace{14pt}
+\begin{center}{\large\bfseries 摘\quad 要}\end{center}
+\vspace{-4pt}
+\begin{quote}
+摘要译文……
+\end{quote}
+
+\begin{figure}[h]
+\centering
+\fig{2}
+\caption{\textbf{图注加粗部分。}图注其余部分。}
+\label{fig:teaser}
+\end{figure}
+
+\section{引言}
+正文……引用写作 \citep{key}。
+
+% 表格示例：数字列保持原样，粗体/底纹按 `pdftr inspect --mode bold` 的结果还原
+\begin{table}[tbp]
+\caption{\textbf{表题加粗部分。}其余部分。}
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+方法 & 指标一 & 指标二 \\
+\midrule
+基线 & 1.0 & 2.0 \\
+\rowcolor{rowlight}本文方法 & \textbf{3.0} & \textbf{4.0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+% 参考文献保持英文；用 natbib 格式手写 \bibitem[作者(年份)]{key}
+\begin{thebibliography}{99}
+\small
+\bibitem[Author et~al.(2026)]{key}
+Author One and Author Two.
+\newblock Title.
+\newblock In \emph{Venue}, 2026.
+\end{thebibliography}
+
+\clearpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\section{附录标题}
+……
+\end{document}

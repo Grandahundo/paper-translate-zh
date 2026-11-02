@@ -1,0 +1,76 @@
+% ============================================================
+% 中文译本 LaTeX 模板（仿 ICLR 版式；tectonic / XeLaTeX 编译）
+% 使用：复制到 latex_dir，按原文调整 geometry、标题、作者；
+%       图片统一用 \fig{N}（N = `pdftr crop` 输出的页序号）。
+% ============================================================
+\documentclass[10pt]{article}
+% —— 版心：按原文实测设置（ICLR/NeurIPS: 5.5in × 9in，左边距 1.5in）
+\usepackage[letterpaper,top=1in,textheight=9in,left=1.5in,textwidth=5.5in,headsep=0.25in,footskip=30pt]{geometry}
+\usepackage[UTF8,scheme=plain,fontset=none,punct=quanjiao]{ctex}
+% —— 西文：TeX Gyre（tectonic 中必须按文件名加载，按字体名找不到）
+\setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setsansfont{texgyreheros}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setmonofont{texgyrecursor}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+% —— 中文：系统字体按名称加载（macOS）。其他系统换成 Noto Serif CJK SC 等
+\setCJKmainfont{Songti SC}[BoldFont={Songti SC Bold},ItalicFont={Kaiti SC}]
+\setCJKsansfont{PingFang SC}
+\setCJKmonofont{Songti SC}
+\setCJKfamilyfont{kai}{Kaiti SC}
+\newcommand{\kai}{\CJKfamily{kai}}
+\linespread{1.22}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx,xcolor,booktabs,colortbl,multirow,array,wrapfig,caption,subcaption,enumitem}
+\usepackage{fancyvrb,algorithm,algpseudocode,fancyhdr,makecell}
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage[round,sort]{natbib}
+\setcitestyle{citesep={；},aysep={,},yysep={;}}
+\usepackage{hyperref}
+\usepackage{url}
+\def\UrlBreaks{\do\_\do\/\do\-}
+
+% ---------- 段落与标题 ----------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5.5pt plus 1pt}
+\captionsetup{font=normalsize,labelsep=colon,skip=6pt}
+\captionsetup[table]{position=top}
+\captionsetup[sub]{font=small}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\algorithmicrequire}{\textbf{输入：}}
+\makeatletter
+\renewcommand{\ALG@name}{算法}
+\renewcommand\section{\@startsection{section}{1}{\z@}{-2.0ex plus -0.5ex minus -.2ex}{1.5ex plus 0.3ex minus0.2ex}{\large\bfseries\raggedright}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}{-1.8ex plus -0.5ex minus -.2ex}{0.8ex plus .2ex}{\normalsize\bfseries\raggedright}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}{-1.5ex plus -0.5ex minus -.2ex}{0.5ex plus .2ex}{\normalsize\bfseries\raggedright}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}{1.2ex plus 0.5ex minus .2ex}{-1em}{\normalsize\bfseries}}
+\makeatother
+\floatname{algorithm}{算法}
+
+% ---------- 浮动体：允许大表大图放在页顶，避免全部堆到文末 ----------
+\setlength{\textfloatsep}{14pt plus 2pt minus 4pt}
+\renewcommand{\topfraction}{0.95}\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.05}\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}\setcounter{bottomnumber}{2}\setcounter{totalnumber}{5}
+
+% ---------- 图片：figs.pdf 每页一张图（由 `pdftr crop` 生成，100% 原尺寸、矢量） ----------
+\newcommand{\figpdf}{figs.pdf}
+\newcommand{\fig}[1]{\includegraphics[page=#1]{\figpdf}}
+
+% ---------- 颜色（用 `pdftr inspect --mode colors` 读取原文实际 RGB 后修改） ----------
+\definecolor{rowlight}{RGB}{220,235,247}
+\definecolor{rowdeep}{RGB}{143,193,227}
+\definecolor{pbord}{RGB}{204,221,255}
+\definecolor{pbg1}{RGB}{239,245,252}
+
+% ---------- 提示词/代码框：可跨页；内容用 PV（Verbatim），中文行需手动折行（≤ ~36 汉字） ----------
+\newtcolorbox{promptbox}[2]{enhanced,breakable,colback=#1,colframe=pbord,colbacktitle=#1,coltitle=black,
+  boxrule=0.5pt,arc=1.5pt,left=8pt,right=8pt,top=3pt,bottom=4pt,toptitle=3pt,bottomtitle=3pt,
+  titlerule=0.4pt,titlerule style=pbord,fonttitle=\bfseries,title={#2},before skip=8pt,after skip=8pt}
+\DefineVerbatimEnvironment{PV}{Verbatim}{fontsize=\small,baselinestretch=1.15}
+
+% ---------- 首页页眉（如原文有机构 logo 条，把它裁成 figs.pdf 第 1 页） ----------
+\fancypagestyle{firstpage}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}
+  \fancyhead[C]{\raisebox{-2pt}{\fig{1}}}\fancyfoot[C]{\thepage}}
+\pagestyle{plain}

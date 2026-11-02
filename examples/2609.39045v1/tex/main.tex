@@ -1,0 +1,354 @@
+\documentclass[10pt]{article}
+\usepackage[letterpaper,top=1in,textheight=9in,left=1.5in,textwidth=5.5in,headsep=0.25in,footskip=30pt]{geometry}
+\usepackage[UTF8,scheme=plain,fontset=none,punct=quanjiao]{ctex}
+\setmainfont{texgyretermes}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setsansfont{texgyreheros}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setmonofont{texgyrecursor}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]
+\setCJKmainfont{Songti SC}[BoldFont={Songti SC Bold},ItalicFont={Kaiti SC}]
+\setCJKsansfont{PingFang SC}
+\setCJKmonofont{Songti SC}
+\setCJKfamilyfont{kai}{Kaiti SC}
+\newcommand{\kai}{\CJKfamily{kai}}
+\linespread{1.22}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx,xcolor,booktabs,colortbl,multirow,array,wrapfig,caption,subcaption,enumitem}
+\usepackage{fancyvrb,algorithm,algpseudocode,fancyhdr,makecell}
+\usepackage[most]{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage[round,sort]{natbib}
+\setcitestyle{citesep={；},aysep={,},yysep={;}}
+\usepackage{hyperref}
+\hypersetup{pdftitle={RSIGame：基于递归自我改进的自主智能体游戏开发（中文译本）}}
+\usepackage{url}
+
+% ---------- 版式（仿 ICLR） ----------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5.5pt plus 1pt}
+\captionsetup{font=normalsize,labelsep=colon,skip=6pt}
+\captionsetup[table]{position=top}
+\captionsetup[sub]{font=small}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\refname}{参考文献}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\algorithmicrequire}{\textbf{输入：}}
+\makeatletter
+\renewcommand{\ALG@name}{算法}
+\makeatother
+\floatname{algorithm}{算法}
+\makeatletter
+\renewcommand\section{\@startsection{section}{1}{\z@}{-2.0ex plus -0.5ex minus -.2ex}{1.5ex plus 0.3ex minus0.2ex}{\large\bfseries\raggedright}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}{-1.8ex plus -0.5ex minus -.2ex}{0.8ex plus .2ex}{\normalsize\bfseries\raggedright}}
+\renewcommand\subsubsection{\@startsection{subsubsection}{3}{\z@}{-1.5ex plus -0.5ex minus -.2ex}{0.5ex plus .2ex}{\normalsize\bfseries\raggedright}}
+\renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}{1.2ex plus 0.5ex minus .2ex}{-1em}{\normalsize\bfseries}}
+\makeatother
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\textfloatsep}{14pt plus 2pt minus 4pt}
+\renewcommand{\topfraction}{0.95}\renewcommand{\bottomfraction}{0.8}\renewcommand{\textfraction}{0.05}\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}\setcounter{bottomnumber}{2}\setcounter{totalnumber}{5}
+\def\UrlBreaks{\do\_\do\/\do\-}
+
+\newcommand{\rsig}{RSIG\textsc{ame}}
+\newcommand{\figpdf}{figs.pdf}
+\newcommand{\fig}[1]{\includegraphics[page=#1]{\figpdf}}
+\definecolor{rowlight}{RGB}{220,235,247}
+\definecolor{rowdeep}{RGB}{143,193,227}
+\definecolor{pbord}{RGB}{204,221,255}
+\definecolor{pbg1}{RGB}{239,245,252}
+\definecolor{pbg2}{RGB}{252,245,232}
+\definecolor{pbg3}{RGB}{244,240,250}
+\definecolor{pbg4}{RGB}{239,248,241}
+\definecolor{pbg5}{RGB}{236,248,247}
+
+% 提示词框
+\newtcolorbox{promptbox}[2]{enhanced,breakable,colback=#1,colframe=pbord,colbacktitle=#1,coltitle=black,
+  boxrule=0.5pt,arc=1.5pt,left=8pt,right=8pt,top=3pt,bottom=4pt,toptitle=3pt,bottomtitle=3pt,
+  titlerule=0.4pt,titlerule style=pbord,fonttitle=\bfseries,title={#2},before skip=8pt,after skip=8pt}
+\DefineVerbatimEnvironment{PV}{Verbatim}{fontsize=\small,baselinestretch=1.15}
+
+\pagestyle{plain}
+\fancypagestyle{firstpage}{\fancyhf{}\renewcommand{\headrulewidth}{0pt}
+  \fancyhead[C]{\raisebox{-2pt}{\fig{1}}}\fancyfoot[C]{\thepage}}
+
+\begin{document}
+\thispagestyle{firstpage}
+
+{\raggedright
+{\LARGE\bfseries \rsig：基于递归自我改进的\\[2pt]自主智能体游戏开发\par}
+\vspace{4pt}
+{\large\textsc{RSIGame: Autonomous Agentic Game Development with Recursive Self-improvement}\par}
+\vspace{12pt}
+\hspace*{0.2in}\parbox{5in}{\linespread{1.0}\selectfont
+\textbf{Wenyi Wu}$^{1*}$\quad \textbf{Minghao Fu}$^{1,2*}$\quad \textbf{Jieyu You}$^{2}$\quad \textbf{Kun Zhou}$^{1\dagger}$\quad \textbf{Siqi Liu}$^{1}$\\
+\textbf{Aayush Salvi}$^{1}$\quad \textbf{Yiheng Lin}$^{2}$\quad \textbf{Ce Zhang}$^{3}$\quad \textbf{Xiaohan Lan}$^{2}$\quad \textbf{Jiahui Zhu}$^{2}$\\
+\textbf{Yujie Zhong}$^{2\dagger}$\quad \textbf{Qi She}$^{2}$\quad \textbf{Biwei Huang}$^{1}$\\[2pt]
+$^{1}$加州大学圣地亚哥分校\quad $^{2}$字节跳动\quad $^{3}$卡内基梅隆大学}
+\par}
+
+\vspace{14pt}
+\begin{center}{\large\bfseries 摘\quad 要}\end{center}
+\vspace{-4pt}
+\begin{quote}
+大语言模型的最新进展使自动游戏生成变得越来越可行，然而要在可玩版本的基础上可靠地进一步提升所生成游戏的质量，仍然颇具挑战。朴素的迭代式改进很容易过拟合于少量测试用例，产出脆弱的游戏：缺陷悬而未决、行为有所缺失，且难以泛化到更广泛的玩家交互。我们提出 \rsig，一个具备递归自我改进能力的自主智能体游戏开发框架。\rsig{} 将开发组织为互补的局部循环与全局循环。具体而言，局部的\emph{探索–诊断–改进}循环广泛探索可执行的游戏，对发现的问题进行诊断与优先级排序，并执行基于证据的修订，其中一份不断演化的清单持续积累新的测试与改进指引。全局循环跟踪整体质量、保留最佳检查点，并在长周期开发中检测饱和或退化。除测试时改进之外，\rsig{} 还进一步通过训练将成功的开发经验内化到生成器中。在 140 个 GameCraft-Bench 任务、两个游戏引擎和五个生成器上，\rsig{} 在相同开发预算下始终提升了游戏质量。值得注意的是，经验内化使 Qwen3.8-27B 在 Godot 上达到 61.38、在 Phaser 上达到 58.53，超过了 GPT-5.5 的单次生成得分，同时将 Qwen 的生成 token 数减少了 11 倍。
+\end{quote}
+
+\begin{center}
+\href{https://github.com/WenyiWU0111/RSIGame}{\faGithub\ 代码}\qquad
+\href{https://huggingface.co/RSIGame}{\raisebox{-1.5pt}{\fig{2}}\ 数据集}\qquad
+\href{https://huggingface.co/spaces/RSIGame/rsigame-page}{\faGlobe\ 项目主页}
+\end{center}
+
+\begin{figure}[h]
+\centering
+\fig{3}
+\caption{\textbf{\rsig{} 将智能体游戏开发转变为自主的递归自我改进。}它将局部的探索–诊断–改进循环与全局进度监控和控制相结合，使 Qwen3.8-27B 接近 GPT-5.5 级别的表现。}
+\label{fig:teaser}
+\end{figure}
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{同等贡献。\quad $^{\dagger}$通讯作者。\quad 联系方式：\texttt{franciskunzhou@gmail.com}。}
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\setcounter{footnote}{0}
+
+\section{引言}
+大语言模型（LLM）与视觉语言模型（VLM）的最新进展大幅扩展了自主智能体执行复杂现实任务的能力，范围涵盖从软件工程到计算机使用自动化等诸多领域\citep{yang2024,zhu2026}。自动游戏开发是另一个前景广阔的领域：构建一个完整的游戏需要协同设计游戏机制与进程，创建源代码和多模态素材，并将这些异构组件组织成一个连贯的可执行项目\citep{luo2026}。随着基础模型在长程生成、多模态理解和工具使用方面的能力迅速提升，这一设想正变得越来越现实。相应地，近期的基准测试表明，基于 VLM 的智能体已经能够把自然语言规格说明转化为具有可辨识机制和视觉内容的可玩游戏\citep{luo2026,chi2026}。
+
+然而，游戏开发作为一个复杂的多模态工程过程，其本质决定了它依然极具挑战性。即便在成熟的人类团队中，开发过程中也常常出现意料之外的缺陷、缺失的功能以及被忽视的边界情况\citep{roque2025}。因此，一种常见的做法是采用迭代式开发流程：开发者反复测试当前构建版本、收集反馈并修订项目，直到达到期望的质量。这一过程可以自然地视为一种递归自我改进\citep{wu2024}，每一轮开发都基于新观察到的证据，在上一版本的基础上推进。受这一流程启发，我们将智能体游戏开发形式化为一个迭代循环：智能体首先生成一个初始游戏，然后反复测试并改进它，直到满足目标要求。
+
+尽管递归自我改进天然契合智能体游戏开发，我们发现它很容易收敛到脆弱的解：大致满足了目标，却留下许多未经测试的缺陷、缺失的行为和边界情况。实际上，开发循环可能过拟合于少量测试用例，而非整体地改进游戏，导致其难以泛化到更广泛的玩家交互。为解决这一问题，我们强化了测试阶段，使其广泛探索剩余的失败与潜在改进，目标是开发出高质量的游戏，而不仅仅是可玩的游戏。具体而言，我们设计了一个\emph{探索–诊断–改进}循环：智能体首先广泛探索可执行的游戏，以发现缺陷、弱点和可增强之处；然后对发现的问题进行诊断并排列优先级，以规划下一轮改进。在整个过程中，我们维护一份\emph{演化清单}，持续积累新识别的问题以及供后续测试和修订使用的可操作指引。通过随着新证据的发现而不断扩展，这份清单持续推动开发过程超越有限的测试用例，朝着更具泛化性的整体游戏质量提升迈进。
+
+为此，我们提出 \rsig（图~\ref{fig:overview}），一个具备递归自我改进能力的自主智能体游戏开发框架。其核心在于，\rsig{} 将开发组织为互补的局部循环与全局循环。局部循环实现了我们的探索–诊断–改进过程：反复探索可执行的游戏，诊断并排序所发现的问题，并基于积累的证据修订项目。全局循环则跨迭代监控开发过程，跟踪整体游戏质量，保留最佳检查点，并检测饱和或退化，使系统能够保持长周期的进展，而不是盲目地持续编辑。除了无需训练的自我改进之外，\rsig{} 还引入了基于训练的经验内化，将成功的开发轨迹、诊断决策和经过验证的修订转化为生成器的监督信号。这种方式使更广义的 RSI 循环能够增强底层生成器。在 140 个 GameCraft-Bench 任务、两个引擎和五个生成器上，\rsig{} 在相同开发预算下始终改进了游戏。通过迭代开发，Qwen3.8-27B 在 Godot 上达到 47.77，而 Kimi-K2.6 为 44.77\citep{moonshot2026}；经验内化将其提升至 61.38，而 Codex+GPT-5.5 的单次生成得分为 50.26\citep{openai2025,openai2026}，同时生成 token 数减少了 11 倍。在 Phaser 上，它升至 50.24，超过了 GPT-5.5 的单次生成得分 49.44。
+
+\section{预备知识}
+\paragraph{智能体游戏开发。}其目标是利用智能体实现游戏创作的自动化。给定一份自然语言的游戏规格说明，智能体将用户意图转化为一个完整且可玩的游戏。与人类游戏开发类似，智能体游戏开发必须满足两个目标：遵循用户需求，以及产出功能正确、没有缺陷的游戏。形式化地，给定游戏规格说明 $x$，我们希望学习一个生成器策略 $\pi_\theta$，用于产生游戏项目
+\begin{equation}
+P_0 \sim \pi_\theta(\cdot \mid x),
+\end{equation}
+其中 $P_0$ 既应符合预期的游戏设计，又应能正确执行。这样的项目由源代码、视觉与文本素材以及配置文件组成。因此，它的构建需要联合生成并整合代码、文本和视觉元素，使之成为一个连贯的交互系统。重要的是，游戏质量最终体现在运行时行为和玩家体验上。每个生成的游戏都包含一组可回放的演示轨迹 $\mathcal{T} = \{\tau_1, \tau_2, \ldots, \tau_N\}$，它们在评估时被回放，并依据一份隐藏的、针对具体任务的评分细则打分。
+
+\begin{figure}[t]
+\centering
+\fig{4}
+\caption{\rsig{} 概览。局部循环通过方向决策、主动探索、基于证据的编辑和智能体验证来自主演化游戏。全局循环监控全局质量、保留最佳检查点，并在进展饱和时引入稀疏的高层指引，从而实现渐进式的多阶段游戏演化。}
+\label{fig:overview}
+\end{figure}
+
+\paragraph{我们的关注点。}由于游戏生成涉及许多紧密耦合的组件，一次性生成完全正确的项目十分困难。因此，现有工作流普遍采用基于迭代的策略：$P_0 \rightarrow P_1 \rightarrow \cdots \rightarrow P_T$。在每次迭代中，执行并测试当前项目，诊断观察到的失败，并据此修订项目。在传统游戏开发中，这一循环依赖人类开发者和试玩测试员。在本工作中，我们将同样的原则引入智能体游戏开发，但以一个完全自主的过程取代人工驱动的测试与修订：该过程递归地测试、诊断并改进其自身生成的游戏。
+
+\section{\rsig}
+我们的 \rsig{} 同时包含无需训练和基于训练的策略。无需训练的策略建立在用于迭代开发的局部循环与全局循环之上，而基于训练的策略则进一步将积累的开发经验内化到骨干游戏生成模型中。
+
+\subsection{无需训练的递归自我改进}
+我们的无需训练 RSI 策略由两部分组成：一个遵循迭代式探索–诊断–改进流程、用以识别问题并完善游戏的局部循环；以及一个监控长周期进展、保留最佳版本并检测饱和的全局循环。
+
+\subsubsection{局部循环：探索–诊断–改进}
+局部循环通过三个阶段执行细粒度的递归游戏改进：自主探索、问题诊断和迭代改进。该循环持续探索可执行的游戏，将新发现的问题和改进机会积累到一份演化清单中，并用它们指导后续修订。
+
+\paragraph{用于自主探索的控制器与探索器。}自主探索阶段涉及两个角色互补的智能体。\emph{控制器}负责决定接下来应探索游戏的哪个方面，而\emph{探索器}与可执行的游戏交互，以收集具体的行为证据。具体来说，给定游戏规格说明 $x$、当前项目 $P_t$、开发清单 $C_t$ 以及可选的阶段级指引 $\gamma_s$，控制器提出一个开发方向 $d_t$。以此方向为条件，探索器与游戏进行有针对性的交互，并产生一条探索轨迹 $\tau_t$：
+\begin{equation}
+d_t \sim \pi_{\mathrm{controller}}(\cdot \mid x, P_t, C_t, \gamma_s), \qquad \tau_t \sim \pi_{\mathrm{explorer}}(\cdot \mid P_t, d_t).
+\end{equation}
+通过这一过程，控制器提供高层的探索意图，而探索器将其落实到观察到的游戏过程中，发现具体的缺陷、缺失的行为和潜在的改进机会，供后续诊断与修订使用。
+
+\paragraph{用于问题诊断的编辑器与验证器。}问题诊断阶段涉及两个职责互补的智能体。\emph{编辑器}把发现的问题和交互证据转化为具体的游戏修改，而\emph{验证器}评估这些修改是否解决了预期问题且未引入退化。具体而言，以当前项目、开发方向和观察到的试玩轨迹为条件，编辑器提出一次编辑
+\begin{equation}
+\Delta_t \sim \pi_{\mathrm{editor}}(\cdot \mid P_t, d_t, \tau_t), \qquad P_{t+1} = \mathrm{Apply}(P_t, \Delta_t).
+\end{equation}
+随后，验证器与更新后的项目交互，并产生验证结果
+\begin{equation}
+v_t \sim \pi_{\mathrm{verifier}}(\cdot \mid P_{t+1}, d_t, \tau_t),
+\end{equation}
+它判定目标问题是否已被成功解决，以及该编辑是否造成了意外的副作用。验证后的结果随后被写回演化清单，为控制器规划下一轮开发提供更新的证据。
+
+\paragraph{伴随清单更新的迭代改进。}为了在迭代之间连接探索、诊断与修订，\rsig{} 维护一份共享的开发清单 $C_t$，作为不断演化的工作状态。清单记录已发现的问题、改进机会、优先级和验证结果，使所有智能体都能基于对当前开发状态的一致视图开展工作。在每一轮中，控制器读取 $C_t$ 以确定下一个开发方向 $d_t$，探索器以新观察到的证据扩充它，编辑器处理优先级较高的条目，验证器则根据所得的游戏行为更新这些条目的状态。这些交互产生下一轮的清单
+\begin{equation}
+C_{t+1} = U(C_t, d_t, \tau_t, \Delta_t, v_t),
+\end{equation}
+它与 $P_{t+1}$ 一起传递给控制器。通过这种方式，\rsig{} 持续积累开发知识，并确保每次迭代都建立在经过验证的进展之上，而不是从头开始。
+
+\subsubsection{全局循环：进度监控与控制}
+局部循环专注于在每轮开发中改进游戏，而全局循环则跨阶段地管理整个开发过程。它由两个组件构成：跟踪累积游戏质量并保留最强检查点的\emph{游戏质量监控器}，以及决定开发应继续、终止还是在额外的高层指引下进入新阶段的\emph{进度与收敛控制}机制。
+
+\paragraph{游戏质量监控器。}游戏质量监控器跨局部开发轮次跟踪游戏层面的进展。一个阶段从上一阶段保留的检查点开始，$P^\star_s \leftarrow P^\star_{s-1}$。在每个全局评估点，监控器将刚产生的检查点与保留的检查点进行比较，并更新
+\begin{equation}
+P^\star_s \leftarrow \mathrm{SelectBest}\left(P^\star_s, P_{t+1}\right).
+\end{equation}
+与局部验证器（评估某次具体编辑是否解决了其目标问题）不同，游戏质量监控器评估的是游戏整体的累积质量，并在整个开发过程中维护一个持久的最佳状态。重要的是，这一监控过程与基准评估器严格隔离，包括其分数、评分细则和反馈。详见附录~\ref{app:monitor}。
+
+\paragraph{进度与收敛控制。}保留检查点 $P^\star_s$ 的演变为控制长周期开发提供了一个自然的信号。如果连续的全局评估都未能产生更好的检查点，\rsig{} 便将这种持续的无进展视为收敛。系统随后要么终止并返回 $P^\star_s$ 作为最终游戏，要么可选地引入来自人类或更强模型的新高层指引 $\gamma_{s+1}$。这类指引提供的是战略方向或创意建议，而非明确的编辑指令。于是，下一个开发阶段在 $\gamma_{s+1}$ 下从保留的最佳检查点 $P^\star_s$ 出发，使局部循环能够探索新的改进方向，同时不丢弃先前已验证的收益。重复这一过程，使 \rsig{} 能够控制长周期进展，同时保留迄今为止达到的最强解。
+
+\subsection{基于训练的知识内化}
+在无需训练的 RSI 过程中，\rsig{} 还积累了关于如何规划、实现、测试和完善游戏的可复用经验。因此，我们进一步将成功的 RSI 知识内化到骨干模型中，把自我改进从上下文优化扩展到参数优化。这一更广义的 RSI 循环改进了底层生成器，使其能够产生更强的初始生成结果，并减少高质量游戏开发所需的完善迭代次数。
+
+\paragraph{开发经验的收集与整理。}我们收集三类监督数据：GPT-5.5\citep{openai2026}在 Godot\citep{godot2026}和 Phaser\citep{photon2026}中构建游戏的\emph{生成轨迹}；从成功生成中收集的\emph{规划轨迹}；以及使用 GLM-5.3-Flash\citep{zhipu2026}运行 \rsig{} 产生的\emph{改进轨迹}。我们只保留可执行的生成结果，以及经编辑后交互验证、且未破坏先前功能行为的改进。总计，我们获得了 2,213 条生成轨迹、2,108 条规划轨迹，以及从 4,003 个候选中得到的 2,013 个经过验证的改进轮次。
+
+\paragraph{经验内化。}我们在整理好的规划、生成和改进轨迹上对 Qwen3.8-27B\citep{qwen2026}进行监督微调。除了从最终的游戏产物中学习之外，模型还内化了驱动成功开发的中间规划、工具使用、诊断和修订决策。这将可复用的 RSI 知识转移到模型参数中，增强了完善能力，并减少了达到高质量游戏生成所需的迭代次数。这种方式为持续 RSI 打开了大门：新获得的开发经验可以被反复内化，从而随时间推移不断改进生成器。训练细节见附录~\ref{app:train}。
+
+\section{实验}
+\subsection{实验设置}
+\paragraph{基准与引擎。}我们在 GameCraft-Bench\citep{luo2026}上进行评估，它包含覆盖 15 个游戏类别的 140 个游戏开发任务。我们在 Godot\citep{godot2026}和 Phaser\citep{photon2026}中实例化相同的任务，并在两种引擎间保持任务规格、评估细则和开发协议不变。因此，Phaser 作为对 Godot 上所得结论的跨引擎稳健性评估。
+
+\paragraph{评估协议。}遵循 GameCraft-Bench，每个生成的游戏都打包了由游戏生成器提供的可回放演示轨迹，这些轨迹被回放，并依据一份隐藏的、针对具体任务的评分细则，在机制（$M$）、深度（$D$）、视觉（$V$）和美术（$A$）四个维度上打分：
+\[
+Q = \textsc{Build} \times (0.15M + 0.35D + 0.15V + 0.35A),
+\]
+其中 $\textsc{Build} \in \{0, 1\}$ 给不可玩的游戏赋零分。我们使用 Qwen3.8-27B\citep{qwen2026}作为评审，并对三次独立的回放加打分运行取平均。隐藏的评分细则、分数和评审反馈从不暴露给开发智能体。评估稳定性和自由游玩稳健性详见附录~\ref{app:stability}和~\ref{app:freeplay}。
+
+\paragraph{基线与开发预算。}我们在多个生成器上比较冻结的初始项目 $P_0$、Play2Code\citep{huang2026}和 \rsig。对于每个生成器，所有开发方法都从 $P_0$ 的同一份克隆出发，并使用相同的每轮工具预算。Play2Code\citep{huang2026}和 \rsig{} 每轮最多可进行 26 次工具调用，最多 30 个开发轮次。完整的模型配置、各行的具体预算、成本核算和实现细节见附录~\ref{app:config}和附录~\ref{app:cost}。
+
+\begin{table}[tbp]
+\caption{\textbf{GameCraft-Bench 上的主要结果（上：Godot；下：Phaser）。}各方法在同一骨干和预算下、从相同的基础游戏出发进行比较，结果为 140 个任务的平均；Tok. 和 Cost 为每个任务的平均计费 token 数和成本（附录~\ref{app:config}）。\textbf{粗体}标出每组内各列的最佳值；\colorbox{rowdeep}{\strut 更深}色的行内化了开发经验。}
+\label{tab:main}
+\centering
+\small
+\setlength{\tabcolsep}{4.2pt}
+\begin{tabular}{@{}lccccccc@{}}
+\toprule
+方法 & 机制 & 深度 & 视觉 & 美术 & 总分 $\uparrow$ & Tok. $\downarrow$ & Cost $\downarrow$ \\
+\midrule
+\multicolumn{8}{c}{\textbf{Godot}\citep{godot2026}} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：Codex + GPT-5.5 (high)} \\
+基线（冻结的 $P_0$） & 58.9 & 51.7 & 51.4 & 44.6 & 50.26 & 0.26M & -- \\
+\quad + Play2Code & 59.2 & 51.3 & 52.2 & 45.8 & 50.74 & 3.20M & \$1.06 \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{72.8} & \textbf{60.3} & \textbf{65.9} & \textbf{64.5} & \textbf{64.53} & \textbf{3.12M} & \textbf{\$0.88} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：Codex + Kimi-K2.6} \\
+基线（冻结的 $P_0$） & 40.2 & 30.3 & 35.4 & 21.9 & 29.63 & 3.22M & -- \\
+\quad + Play2Code & 44.8 & 35.4 & 40.2 & 28.6 & 35.19 & \textbf{7.07M} & \$1.27 \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{51.7} & \textbf{40.1} & \textbf{47.1} & \textbf{45.4} & \textbf{44.77} & 7.39M & \textbf{\$1.18} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：Codex + GLM-5.3-Flash} \\
+基线（冻结的 $P_0$） & 35.7 & 30.2 & 32.0 & 24.9 & 29.46 & 0.44M & -- \\
+\quad + Play2Code & 47.2 & 39.7 & 41.1 & 32.7 & 38.59 & \textbf{3.18M} & \textbf{\$0.99} \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{51.9} & \textbf{44.4} & \textbf{49.9} & \textbf{53.9} & \textbf{49.72} & 5.06M & \$1.25 \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：Codex + Qwen3.8-27B} \\
+基线（冻结的 $P_0$） & 41.2 & 33.4 & 38.6 & 38.3 & 37.07 & 6.41M & -- \\
+\quad + Play2Code & 44.6 & 36.1 & 42.1 & 42.5 & 40.53 & 9.92M & \$1.32 \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{51.2} & \textbf{40.4} & \textbf{47.5} & \textbf{53.8} & \textbf{47.77} & \textbf{9.13M} & \textbf{\$1.09} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：Codex + Qwen3.8-27B (SFT)} \\
+基线（冻结的 $P_0$） & 56.1 & 47.5 & 49.8 & 44.8 & 48.22 & 0.57M & -- \\
+\quad + Play2Code & 57.4 & 48.1 & 51.6 & 47.2 & 49.71 & 3.74M & \$1.08 \\
+\rowcolor{rowdeep}\quad + \rsig & \textbf{68.7} & \textbf{55.8} & \textbf{62.8} & \textbf{63.2} & \textbf{61.38} & \textbf{3.49M} & \textbf{\$0.94} \\
+\midrule
+\multicolumn{8}{c}{\textbf{Phaser}\citep{photon2026}} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：OpenGame + GPT-5.5} \\
+基线（冻结的 $P_0$） & 49.1 & 38.6 & 53.6 & 58.6 & 49.44 & 5.36M & -- \\
+\quad + Play2Code & 57.1 & 42.0 & 60.0 & 65.2 & 55.10 & \textbf{8.34M} & \textbf{\$1.43} \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{59.8} & \textbf{44.2} & \textbf{62.4} & \textbf{69.7} & \textbf{58.21} & 8.38M & \$1.44 \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：OpenGame + Qwen3.8-27B} \\
+基线（冻结的 $P_0$） & 40.6 & 29.5 & 43.7 & 48.7 & 40.03 & 9.03M & -- \\
+\quad + Play2Code & 51.0 & 36.4 & 53.2 & 58.0 & 48.70 & 12.99M & \$1.75 \\
+\rowcolor{rowlight}\quad + \rsig & \textbf{52.0} & \textbf{36.5} & \textbf{54.6} & \textbf{61.3} & \textbf{50.24} & \textbf{12.78M} & \textbf{\$1.50} \\
+\midrule
+\multicolumn{8}{@{}l}{\quad\kai 生成器：OpenGame + Qwen3.8-27B (SFT)} \\
+基线（冻结的 $P_0$） & 47.1 & 35.4 & 48.9 & 52.4 & 45.14 & 5.42M & -- \\
+\quad + Play2Code & 55.6 & 41.7 & 57.3 & 61.8 & 53.15 & 9.58M & \$1.61 \\
+\rowcolor{rowdeep}\quad + \rsig & \textbf{60.4} & \textbf{46.2} & \textbf{62.3} & \textbf{68.4} & \textbf{58.53} & \textbf{9.31M} & \textbf{\$1.53} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Godot 游戏结果}
+表~\ref{tab:main} 揭示了三个主要发现。第一，\emph{\rsig{} 在各生成器上都带来了大幅且一致的提升。}在全部五种设置下，它将冻结的初始游戏提高了 10.7–20.3 个总分点，提升一致地覆盖机制、深度、视觉和美术。第二，\emph{在相同计算预算下，\rsig{} 的表现显著优于其他基于递归的方法。}在相同开发预算下，\rsig{} 比 Play2Code 高出 7.2–13.8 个总分点。Play2Code 对强大的 Codex+GPT-5.5 初始化和 Qwen3.8-27B 变体几乎没有带来提升，而 \rsig{} 则大幅改进了同样的冻结游戏。这一对比表明，收益来自开发的组织方式，而不仅仅是迭代本身。最后，\emph{经验内化同时提升了质量和效率。}微调将 Qwen3.8-27B 的单次生成得分从 37.07 提高到 48.22，与 Codex+GPT-5.5 相差不到 2.0 分，同时将生成 token 数减少了 11 倍（从 6.41M 降至 0.57M）。配合 \rsig，得分进一步升至 61.38，总 token 用量降低 2.6 倍（从 9.13M 降至 3.49M）。
+
+\begin{figure}[t]
+\centering
+\fig{5}
+\caption{\textbf{GameCraft-Bench（40 个任务）上的开发时扩展。}在 Godot 和 Phaser 上，无论初始生成器强（GPT-5.5）或弱（Qwen3.8-27B），迭代开发都可能停滞或退化，而 \rsig{} 在各开发预算下都实现了持续改进。全局质量监控器保留迄今达到的最佳检查点，与返回最后一个检查点相比改善了质量–成本权衡。阴影区域表示 $\pm1$ 个标准误。}
+\label{fig:scaling}
+\vspace{6pt}
+\fig{6}
+\caption{\textbf{全局质量控制与经验迁移。}(\textbf{a}) 最佳检查点跟踪保护了早期收益免受后续退化的影响。(\textbf{b}) 感知饱和的停止策略以更少的开发轮次达到了相当的质量。(\textbf{c}) 内化经过验证的开发经验，在所有质量维度上改进了单次生成。}
+\label{fig:global}
+\end{figure}
+
+\subsection{Phaser 游戏结果}
+表~\ref{tab:main} 的 Phaser 部分表明，\rsig{} 的收益可以跨引擎迁移：它使全部三个生成器在其冻结基线之上提高了 8.8–13.4 个总分点，并在每种设置下都取得了最强的最终质量。有趣的是，Play2Code 在 Phaser 上明显强于在 Godot 上。分类细目揭示了原因：Phaser 的初始化往往机制和深度较弱、视觉和美术较强，因而总分相近，却留下了更多容易改进的功能性提升空间。Play2Code 因此可以简单地找到这些明显的缺陷并挽回可观的质量，从而缩小与 \rsig{} 的差距。尽管如此，\rsig{} 仍然始终产出最好的最终游戏，这表明即使此类改进已经占据了大部分可用的提升空间，它的优势也不止于低层次的改进。
+
+\section{进一步分析}
+\paragraph{全局质量监控能否改进开发时扩展？}图~\ref{fig:scaling} 揭示了不同开发方法随额外计算扩展时的明显差异。单纯延长预算并不能保证得到更好的游戏：Play2Code 很快陷入停滞，并且随着轮次增加经常出现退化。相比之下，\rsig{} 在 Godot 和 Phaser 上、无论初始化强弱，都能持续地把额外的开发轮次转化为更高的游戏质量。仅局部循环本身就已带来可观的收益，但其轨迹仍然波动；全局质量监控器通过保留迄今达到的最佳状态来稳定这一过程，从而在整个开发预算内实现持续改进。
+
+\begin{figure}[t]
+\centering
+\fig{7}
+\caption{\textbf{自适应开发跟随游戏状态并提升最终质量。}(a, b) 自适应开发根据当前瓶颈重新分配精力：构建失败后转向改进，视觉质量落后时转向美术。(c, d) 盲测成对评估一致地更偏好自适应开发，而非轮转调度。}
+\label{fig:adaptive}
+\end{figure}
+
+\begin{table}[tbp]
+\centering
+\small
+\begin{subtable}[t]{0.47\linewidth}\centering
+\begin{tabular}{@{}lcc@{}}
+\toprule
+方法 & \makecell{有据\\精确率 $\uparrow$} & \makecell{无据目标\\/ 轮 $\downarrow$} \\
+\midrule
+自由评论者 & 58.6\% & 1.93 \\
+智能体验证 & \textbf{72.3\%} & \textbf{0.50} \\
+\bottomrule
+\end{tabular}
+\caption{改进前的目标溯据，40 个会话。}
+\end{subtable}\hfill
+\begin{subtable}[t]{0.5\linewidth}\centering
+\begin{tabular}{@{}lccc@{}}
+\toprule
+方法 & \makecell{失败\\召回率 $\uparrow$} & \makecell{特异度\\$\uparrow$} & \makecell{平衡\\准确率 $\uparrow$} \\
+\midrule
+仅构建 & 0.0\% & \textbf{100.0\%} & 50.0\% \\
+回放 + 验证 & \textbf{76.2\%} & 92.6\% & \textbf{84.4\%} \\
+\bottomrule
+\end{tabular}
+\caption{改进后的失败检测，48 个经裁定的轮次。}
+\end{subtable}
+\captionsetup{position=bottom}
+\caption{\textbf{智能体验证同时改进了目标溯据和编辑后的可靠性。}在编辑之前，它过滤掉缺乏依据的改进目标；在编辑之后，基于回放的验证能检测出仅靠编译无法发现的失败修改和退化。}
+\label{tab:verify}
+\end{table}
+
+图~\ref{fig:global}(a)(b) 进一步分离出这种全局控制的益处。保留的检查点紧密跟踪各预算内的理想最佳检查点，防止后续编辑抹去早先的收益；而感知饱和的停止策略以更少的轮次达到了与长得多的固定预算运行相当的质量。综合来看，这些结果表明监控器使开发时扩展既更可靠，又更节省计算。详细的停止准则见附录~\ref{app:monitor}。
+
+\paragraph{自适应演化重要吗？}图~\ref{fig:adaptive} 考察了局部循环自适应地选择自身开发重点（而非遵循固定的轮转调度）是否有益。自适应演化将精力投向当前的游戏状态：构建失败后，它强烈地转向改进；而一旦视觉质量成为瓶颈，它会分配明显更多的轮次给美术（图~\ref{fig:adaptive}(a)(b)）。这种自适应行为也带来了更好的最终游戏：盲测成对评估在 59\% 的比较中偏好自适应开发，而偏好轮转的只有 37\%，并且在全部四个质量维度上都具有一致的优势（图~\ref{fig:adaptive}(c)(d)）。这些结果表明，长周期开发受益于让局部循环响应游戏不断变化的需求，而不是遵循固定的日程。完整的评估细节见附录~\ref{app:adaptive}。
+
+\paragraph{智能体验证能让局部改进更可靠吗？}表~\ref{tab:verify} 在编辑前后两个时点评估了验证的效果。基于证据的改进前验证将有据精确率从 58.6\% 提高到 72.3\%，并将每轮无依据目标数从 1.93 降至 0.50。编辑之后，基于回放的验证检测出 76.2\% 的不成功改进，平衡准确率达到 84.4\%，而仅检查构建的方法一个此类行为失败也检测不到。综合来看，这些结果表明智能体验证既提升了开发决策的质量，也提升了返回给后续轮次的反馈的可靠性。审计协议和指标定义见附录~\ref{app:audit}。
+
+\paragraph{开发经验能否迁移到未来的生成中？}图~\ref{fig:global}(c) 表明，开发经验能够迁移回生成模型。仅在生成轨迹上训练，带来的提升在各质量维度间并不均衡；而加入规划和经过验证的改进经验后，机制、深度、视觉和美术都得到了一致的改进。提升在机制（+14.9）和深度（+14.1）上尤为显著，使总分在任何测试时开发之前就提高了 +11.1 分。这表明，规划和改进轨迹提供了可复用的知识，其价值超出了单纯模仿成功的游戏生成。
+
+\section{相关工作}
+\paragraph{游戏生成与开发基准。}近期的基准越来越多地在完整的可执行游戏而非孤立的代码片段上评估智能体。OpenGame-Bench\citep{jiang2026}通过构建有效性、视觉可用性和指令对齐来评估基于网页的游戏；GameCraft-Bench\citep{luo2026}将评估扩展到基于引擎的游戏，采用以交互为基础的机制、内容、视觉和美术度量；GameDevBench\citep{chi2026}则研究在更大代码库和素材上的多模态游戏开发。相关工作还通过基准和生成系统两个方面，进一步考察了游戏智能体中的交互以及更广泛的基于网页或代码的游戏生成\citep{lin2026,hu2024game,zhang2025,zhang2026,ma2026}。总体而言，这些工作把评估从静态的代码正确性转向可执行、可交互的游戏产物的质量。然而，它们只为单次提交的构建版本打分，至于智能体应如何在多轮开发中持续改进游戏，仍是一个悬而未决的问题——而这正是我们所研究的设定。
+
+\paragraph{迭代式智能体游戏开发。}近期的系统将游戏生成扩展为迭代开发。Play2Code\citep{huang2026}在游玩与代码修订之间交替进行，利用每个构建版本的交互反馈来指导后续编辑；VibeGame\citep{hu2026vibe}则协调多个专门化的智能体进行持续的游戏开发。OpenGame\citep{jiang2026}进一步跨项目积累可复用的开发技能，以支持后续生成。这些工作沿袭了基于反复推理、执行与反馈的更广泛的智能体编程范式\citep{yang2024,hong2024,yao2023,shinn2023}。\rsig{} 并非引入迭代本身，而是聚焦于如何在长周期中可靠地维持迭代开发。它将自适应、基于证据的局部改进与全局的最佳检查点跟踪和饱和检测相结合。高层指引还可以在自主进展停滞后重新开启开发，从而实现多阶段的游戏演化。
+
+\paragraph{验证与从开发经验中学习。}智能体验证已经通过多种途径得到研究，包括通用的 LLM 作为评审协议\citep{zheng2023}、智能体循环中可靠的过程控制方法\citep{wu2026}，以及通过运行时交互来验证行为的游戏专用方法\citep{jia2026,huang2026}。在 \rsig{} 中，独立验证为每一轮局部开发收尾：更新后的游戏被回放，以确认预期的改进并检测新的退化，验证结果被写回共享的开发状态。在单个任务之外，已有工作从反馈、记忆或经过验证的轨迹中学习\citep{shinn2023,madaan2023,chen2024,wang2025,pan2026,zelikman2022,zhou2026}，而游戏系统则跨生成过程复用经验\citep{jiang2026,hu2026vibe}。\rsig{} 拓展了这一思路，联合内化规划、生成和经过验证的改进经验，以增强未来的游戏生成与开发。
+
+\section{结论}
+我们提出了 \rsig，一个将游戏创作形式化为递归自我改进过程的自主智能体游戏开发框架。\rsig{} 通过广泛的探索、结构化的诊断、按优先级的改进以及一份不断扩展已识别问题和改进机会集合的演化清单，强化了开发循环。其局部的探索–诊断–改进循环支持对可执行游戏进行基于证据的修订，而全局循环跟踪长周期进展、保留最佳检查点，并检测饱和或退化。我们还进一步引入了基于训练的经验内化，将成功的开发轨迹迁移回骨干游戏生成模型，使未来的游戏创作获得超越单纯测试时完善的改进。在 140 个 GameCraft-Bench 任务、两个游戏引擎和五个生成器上的实验表明，\rsig{} 在相同开发预算下始终提升游戏质量，使较小的开放模型在迭代开发之后能够达到甚至超越明显更强的生成器。
+
+\section*{AI 使用声明}
+大语言模型是本工作研究方法中不可或缺的一部分。GPT-5.5 用于游戏生成和规划数据的收集；GLM-5.3-Flash 用于游戏改进、验证以及改进数据的收集；Qwen3.8-27B 用作游戏测试智能体、基准评估评审，以及经验内化的基础模型。此外，Claude Opus 5 被用于独立的验证审计。
+
+在研究和稿件准备过程中，我们还使用了基于 LLM 的助手进行语言编辑、呈现润色和编程辅助。实验由作者设计，作者审阅了所得的产物和测量结果，并核实了所有报告的结果与科学论断。作者对本文内容承担全部责任。
+
+\section*{伦理声明}
+我们的研究关注通用的游戏生成与游戏开发任务。我们在生成过程中施加了安全约束，并从评估和数据整理中排除了包含不安全或敏感内容的产物。实验不使用私人用户数据、个人信息或用户生成内容。
+
+人工参与仅限于游戏评估和高层开发指引。我们研究的是由此得到的游戏评估和指引，而非参与者的属性，且不收集任何敏感个人信息。发布的数据集和产物经过筛查，移除了机器特定路径、凭据和个人信息。
+
+\section*{可复现性声明}
+所有报告的结果都可以追溯到保留的实验产物和有文档记录的协议。表~\ref{tab:repro} 为发布的产物以及说明实验流程各组成部分的附录章节提供了统一索引。
+
+\textbf{受控比较。}对于每项比较，初始项目 $P_0$ 都是冻结的，每种开发方法都获得同一份克隆、相同的改进骨干和相同的每轮工具预算。各行具体的开发预算在附录~\ref{app:config} 中明确报告。每个产出的游戏都被独立回放并打分三次，而基准评分细则、分数和评审输出对所有开发智能体保持隐藏。回放和评审的变异性在附录~\ref{app:stability} 中量化。
+
+\textbf{产物可得性。}完整的实现、提示词和评估流程可在我们的代码仓库\footnote{\url{https://github.com/WenyiWU0111/RSIGame}}中获取，具有代表性的演化游戏可在项目主页\footnote{\url{https://huggingface.co/spaces/RSIGame/rsigame-page}}上游玩。冻结的基础项目、训练轨迹和逐轮运行树正在内部审核中，获批后将发布。我们还在 Hugging Face\footnote{\url{https://huggingface.co/datasets/RSIGame/RSIGame-TableArtifacts}}上发布了支撑所报告结果的完整评估产物，包括 51,644 个评分文件，含逐任务的分数、评审输出和回放报告。它们的发布状态及相应的协议文档汇总于表~\ref{tab:repro}。
+
+\clearpage
+\input{refs}
+\clearpage
+\input{appendix1}
+\input{appendix2}
+\input{appendix3}
+\end{document}
