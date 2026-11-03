@@ -1,5 +1,7 @@
 # paper-translate-zh
 
+![paper-translate-zh](assets/banner.png)
+
 英文论文 PDF → 中文 PDF 的工具和 Claude Code 技能。正文用 LaTeX 重新排版，图片保留原始矢量图，只翻译图注。
 
 ```

@@ -82,7 +82,7 @@ def font_files(cfg):
 # ---------------------------------------------------------------- inspect
 def cmd_inspect(cfg, a):
     d = pymupdf.open(cfg['source_pdf'])
-    pages = parse_pages(a.pages, len(d))
+    pages = [] if (a.crop and not a.pages) else parse_pages(a.pages, len(d))
     for pn in pages:
         p = d[pn - 1]
         td = p.get_text('dict')
