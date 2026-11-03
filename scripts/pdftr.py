@@ -5,7 +5,11 @@
 就地"擦除英文 + 写入中文"；位图原样保留；所有图按区域裁成独立页，供 LaTeX
 \\includegraphics[page=N] 引用。
 
-子命令（均读取 project.json，见 templates/project.example.json）：
+一键：  pdftr translate <arXiv ID | arXiv 链接 | 本地 PDF> [--mode fine|quick] [--bilingual]
+
+溯源翻译（arXiv 源码）：prep / batches / run-api / check / assemble    快翻：quick    质检：qa-pdf
+
+PDF 重排流程子命令（读取 project.json，见 templates/project.example.json）：
   fonts      从系统 TTC 中抽取中文字体（宋体常规/粗体）到 fonts_dir
   inspect    页面结构/字体/图片/色块/粗体单元格/区域截图，帮助确定图区域与表格样式
   regions    自动估计矢量图区域（非正文字体文字 + 绘图 + 图片的聚类）及图注位置
@@ -447,6 +451,165 @@ def cmd_preview(cfg, a):
         fp = os.path.join(cfg['work_dir'], f'sheet_{k // per + 1:02d}.png'); sheet.save(fp); print(fp)
 
 
+# ---------------------------------------------------------------- 溯源翻译 / 一键 / 快翻 / 质检
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import srcmode as sm
+
+
+def _proj_name(aid, pdf):
+    return (aid or os.path.splitext(os.path.basename(pdf))[0]).replace('/', '_')
+
+
+def _agent_plan(proj, meta, n):
+    bs = sm.batches(meta, n)
+    work = os.path.join(proj, 'work')
+    print(f'\n已切成 {len(meta["chunks"])} 块，建议 {len(bs)} 个 agent 并行：')
+    for i, b in enumerate(bs, 1):
+        print(f'  agent {i}: {" ".join(b)}')
+    json.dump(bs, open(os.path.join(work, 'batches.json'), 'w'))
+    print(f"""
+下一步（由主 agent 执行，详见 SKILL.md「溯源翻译」）：
+  1. 参考 {work}/terms.txt 修订术语表 {work}/glossary.md
+  2. 按上面的分组，在同一条消息里并行启动 {len(bs)} 个子 agent；每个子 agent：
+     读 {sm.SKILL_ROOT}/templates/translate_prompt.md 与 glossary.md，
+     把 work/chunks/src/<id>.tex 译成 work/chunks/zh/<id>.tex
+  3. pdftr check {proj}          # 结构/数字/漏译校验，按提示返修
+  4. pdftr assemble {proj} --build --bilingual""")
+
+
+def cmd_translate(a):
+    aid, pdf = sm.resolve_input(a.input)
+    proj = os.path.abspath(a.out or _proj_name(aid, pdf or a.input) + '_zh')
+    os.makedirs(proj, exist_ok=True)
+    if aid: print(f'arXiv ID: {aid}')
+    if a.mode == 'quick':
+        if not pdf:
+            if not aid: sys.exit('无法识别输入：需要本地 PDF、arXiv ID 或 arXiv 链接')
+            pdf = os.path.join(proj, 'orig.pdf')
+            if not os.path.exists(pdf): open(pdf, 'wb').write(sm._get(f'https://arxiv.org/pdf/{aid}')[0])
+        return run_quick(pdf, proj, a)
+    if aid and not a.no_source:
+        print('下载 arXiv 源码 ...')
+        if sm.fetch(aid, proj):
+            meta = sm.prepare(proj, target=a.chunk, fontset=a.fontset)
+            print(f'主文件 {meta["main"]}，{len(meta["chunks"])} 块，共 {sum(c["chars"] for c in meta["chunks"])} 字符')
+            if a.engine == 'api':
+                sm.translate_api(proj, workers=a.workers)
+                sm.check(proj)
+                return finish(proj, a.bilingual, aid)
+            return _agent_plan(proj, meta, a.agents)
+        print('该论文在 arXiv 上没有 LaTeX 源码（仅 PDF），改用 PDF 重排流程。')
+        pdf = pdf or os.path.join(proj, 'orig.pdf')
+    if not pdf: sys.exit('无法识别输入：需要本地 PDF、arXiv ID 或 arXiv 链接')
+    # PDF 重排流程：搭好工程骨架
+    tex = os.path.join(proj, 'tex'); os.makedirs(tex, exist_ok=True)
+    tdir = os.path.join(sm.SKILL_ROOT, 'templates')
+    for f in ('preamble.tex', 'main.tex'):
+        if not os.path.exists(os.path.join(tex, f)): shutil.copy(os.path.join(tdir, f), tex)
+    pj = os.path.join(proj, 'project.json')
+    if not os.path.exists(pj):
+        c = json.load(open(os.path.join(tdir, 'project.example.json')))
+        c.update(source_pdf=os.path.abspath(pdf), output_pdf=os.path.join(proj, _proj_name(aid, pdf) + '_zh.pdf'),
+                 fonts_dir=os.path.join(sm.SKILL_ROOT, 'fonts'), figures=[])
+        json.dump(c, open(pj, 'w'), indent=1, ensure_ascii=False)
+    print(f'已建立 PDF 重排工程 {proj}（project.json + tex/），按 SKILL.md「PDF 重排流程」继续。')
+
+
+def finish(proj, bilingual, name):
+    mains = sm.assemble(proj, bilingual)
+    outs = []
+    for kind, m in mains.items():
+        out = os.path.join(proj, f'{name.replace("/", "_")}_zh{"_bi" if kind == "bi" else ""}.pdf')
+        print(f'编译 {kind} ...'); outs.append(sm.build_tex(m, out))
+    orig = os.path.join(proj, 'orig.pdf')
+    if os.path.exists(orig): qa_pdf(orig, outs[0])
+    for o in outs: print('OK →', o)
+
+
+def cmd_prep(a):
+    meta = sm.prepare(a.proj, target=a.chunk, fontset=a.fontset)
+    _agent_plan(a.proj, meta, a.agents)
+
+
+def cmd_batches(a):
+    meta = json.load(open(os.path.join(a.proj, 'work', 'manifest.json')))
+    for i, b in enumerate(sm.batches(meta, a.agents), 1): print(f'agent {i}: {" ".join(b)}')
+
+
+def cmd_run_api(a):
+    sm.translate_api(a.proj, workers=a.workers, only=set(a.only) if a.only else None)
+
+
+def cmd_check(a):
+    missing, problems = sm.check(a.proj)
+    if missing or problems: sys.exit(1)
+
+
+def cmd_assemble(a):
+    meta = json.load(open(os.path.join(a.proj, 'work', 'manifest.json')))
+    name = a.name or os.path.basename(os.path.abspath(a.proj)).removesuffix('_zh')
+    if a.build: finish(a.proj, a.bilingual, name)
+    else:
+        for k, m in sm.assemble(a.proj, a.bilingual).items(): print(k, '→', m)
+
+
+def run_quick(pdf, outdir, a):
+    """快翻：调用 PDFMathTranslate（pdf2zh）在原 PDF 上就地替换文字，输出纯中文 + 双语。"""
+    exe = os.environ.get('PDF2ZH_BIN') or shutil.which('pdf2zh')
+    # 上游依赖漂移：新版 tencentcloud SDK / bitstring 会让 pdf2zh 启动即报错，这里固定兼容版本
+    pins = ['--with', 'tencentcloud-sdk-python==3.0.1300', '--with', 'bitstring<4.3', '--with', 'numpy<2']
+    cmd = [exe] if exe else (['uvx', '--python', '3.12', '--from', 'pdf2zh'] + pins + ['pdf2zh'] if shutil.which('uvx') else None)
+    if not cmd: sys.exit('快翻需要 pdf2zh：pip install pdf2zh（或安装 uv 后自动 uvx 运行）')
+    service = a.service or os.environ.get('PDF2ZH_SERVICE', 'google')
+    full = cmd + [pdf, '-o', outdir, '-li', 'en', '-lo', 'zh', '-s', service]
+    if a.pages: full += ['-p', a.pages]
+    print('运行：', ' '.join(full))
+    r = subprocess.run(full)
+    if r.returncode: sys.exit('pdf2zh 失败')
+    stem = os.path.splitext(os.path.basename(pdf))[0]
+    mono = os.path.join(outdir, stem + '-mono.pdf')
+    if os.path.exists(mono): qa_pdf(pdf, mono)
+    print('OK →', outdir)
+
+
+def qa_pdf(orig, zh):
+    """成品质检：原文中的小数/大数是否都出现在译文里；译文中是否有整块未翻译的英文。"""
+    def nums(path):
+        c = collections.Counter()
+        for p in pymupdf.open(path):
+            c.update(re.findall(r'(?<![A-Za-z0-9_.])\d+\.\d+(?![A-Za-z0-9_])', p.get_text()))
+        return c
+    no, nz = nums(orig), nums(zh)
+    miss = {k: v - nz.get(k, 0) for k, v in no.items() if v > nz.get(k, 0)}
+    d = pymupdf.open(zh); leftovers = []
+    for i, p in enumerate(d):
+        for b in p.get_text('blocks'):
+            t = b[4].strip()
+            if len(t) < 60: continue
+            en = len(re.findall(r'[A-Za-z]{3,}', t)); cn = len(re.findall(r'[一-鿿]', t))
+            if en >= 15 and cn / (cn + en) < 0.2 and not re.match(r'\[\d+\]|\d+\.\s', t):
+                leftovers.append((i + 1, t[:70].replace('\n', ' ')))
+    print(f'质检：原文小数 {sum(no.values())} 个，译文缺少 {sum(miss.values())} 个；疑似未翻译英文块 {len(leftovers)} 个'
+          '（参考文献、代码、表格行等属正常）')
+    for k, v in list(miss.items())[:15]: print(f'  缺少数字 {k} ×{v}')
+    for pg, t in leftovers[:15]: print(f'  p{pg}: {t}')
+
+
+def cmd_quick(a):
+    aid, pdf = sm.resolve_input(a.input)
+    out = os.path.abspath(a.out or _proj_name(aid, pdf or a.input) + '_quick')
+    os.makedirs(out, exist_ok=True)
+    if not pdf:
+        pdf = os.path.join(out, 'orig.pdf'); open(pdf, 'wb').write(sm._get(f'https://arxiv.org/pdf/{aid}')[0])
+    run_quick(pdf, out, a)
+
+
+def cmd_qa_pdf(a): qa_pdf(a.orig, a.zh)
+
+
+SRC_CMDS = {'translate', 'prep', 'batches', 'run-api', 'check', 'assemble', 'quick', 'qa-pdf'}
+
+
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -465,7 +628,27 @@ def main():
     sub.add_parser('build')
     s = sub.add_parser('preview'); s.add_argument('--pdf'); s.add_argument('--dpi', type=int, default=40)
     s.add_argument('--cols', type=int, default=4); s.add_argument('--rows', type=int, default=2)
+    s = sub.add_parser('translate', help='一键翻译：arXiv ID / 链接 / 本地 PDF')
+    s.add_argument('input'); s.add_argument('-o', '--out')
+    s.add_argument('--mode', choices=['fine', 'quick'], default='fine', help='fine=精翻（默认），quick=快翻（pdf2zh）')
+    s.add_argument('--engine', choices=['agent', 'api'], default='agent', help='agent=Claude 子 agent 并行；api=直接并发调用 API')
+    s.add_argument('--agents', type=int, default=6); s.add_argument('--workers', type=int, default=8)
+    s.add_argument('--chunk', type=int, default=3500, help='每块目标字符数')
+    s.add_argument('--bilingual', action='store_true'); s.add_argument('--no-source', action='store_true')
+    s.add_argument('--fontset', choices=['mac', 'fandol', 'windows', 'ubuntu'])
+    s.add_argument('--service'); s.add_argument('--pages')
+    s = sub.add_parser('prep'); s.add_argument('proj'); s.add_argument('--chunk', type=int, default=3500)
+    s.add_argument('--agents', type=int, default=6); s.add_argument('--fontset')
+    s = sub.add_parser('batches'); s.add_argument('proj'); s.add_argument('--agents', type=int, default=6)
+    s = sub.add_parser('run-api'); s.add_argument('proj'); s.add_argument('--workers', type=int, default=8); s.add_argument('--only', nargs='*')
+    s = sub.add_parser('check'); s.add_argument('proj')
+    s = sub.add_parser('assemble'); s.add_argument('proj'); s.add_argument('--build', action='store_true')
+    s.add_argument('--bilingual', action='store_true'); s.add_argument('--name')
+    s = sub.add_parser('quick'); s.add_argument('input'); s.add_argument('-o', '--out'); s.add_argument('--service'); s.add_argument('--pages')
+    s = sub.add_parser('qa-pdf'); s.add_argument('orig'); s.add_argument('zh')
     a = ap.parse_args()
+    if a.cmd in SRC_CMDS:
+        return globals()['cmd_' + a.cmd.replace('-', '_')](a)
     cfg = load_cfg(a.config)
     globals()['cmd_' + a.cmd](cfg, a)
 
