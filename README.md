@@ -12,7 +12,7 @@
    - 精翻（默认）：LaTeX 重新排版，术语全文统一，可同时输出中英对照版。
    - 快翻（`--mode quick`）：调用 [PDFMathTranslate](https://github.com/PDFMathTranslate/PDFMathTranslate) 在原 PDF 上就地替换，一两分钟出稿，适合先看大意。
 2. **溯源翻译**：arXiv 论文直接下载 LaTeX 源码翻译。公式、表格、参考文献、交叉引用全部来自源码，再用原模板编译。没有源码时自动退回 PDF 重排流程。
-3. **Agent 并行**：按 LaTeX 环境边界切块、按字数均衡分组，多个子 agent 共用一份术语表同时翻译。也可以用 API 引擎（Anthropic 或任意 OpenAI 兼容端点）并发翻译。
+3. **Agent 并行**：按 LaTeX 环境边界切块、按字数均衡分组，多个子 agent 共用一份术语表同时翻译。支持 Claude Code 子 agent、Codex（并发 `codex exec`）和 API 引擎（Anthropic 或任意 OpenAI 兼容端点）。
 4. **一键翻译**：给 arXiv ID、链接或本地 PDF 都行，在 Claude Code 里说一句话，或者敲一条命令。
 5. **自动质检**：逐块比对 LaTeX 结构、引用键和数字，再把成品与原 PDF 对比，找出缺失的数字和漏译段落。
 6. **图不翻译**：图片保留原图，只翻译图注。
@@ -27,11 +27,12 @@ cd paper-translate-zh && ./scripts/setup.sh   # 建 venv、装依赖；另需 te
 ./pdftr translate paper.pdf --mode quick         # 快翻
 ```
 
-在 Claude Code 中使用时，把本目录放到 `~/.claude/skills/paper-translate-zh`（或项目的 `.claude/skills/` 下），然后直接说“翻译 arxiv.org/abs/1706.03762，要中英对照”。剩下的流程（术语表、启动并行 agent、校验、编译）都写在 [SKILL.md](SKILL.md) 里。
+**Claude Code 和 Codex 都能用**：运行 `scripts/install.sh`（或 `install.sh claude` / `install.sh codex`），把技能链接到 `~/.claude/skills/` 和 `~/.codex/skills/`，然后直接说“翻译 arxiv.org/abs/1706.03762，要中英对照”。剩下的流程（术语表、启动并行 agent、校验、编译）都写在 [SKILL.md](SKILL.md) 里。
 
-不用 Claude 子 agent 时，可以用 API 引擎一条命令跑完：
+想在命令行一条跑完，可以选 Codex 引擎或 API 引擎：
 
 ```bash
+./pdftr translate 1706.03762 --engine codex --agents 6 --bilingual   # 并发启动 6 个 codex exec
 ANTHROPIC_API_KEY=... ./pdftr translate 1706.03762 --engine api --workers 8 --bilingual
 # 或任意 OpenAI 兼容端点：PDFTR_API_BASE / PDFTR_API_KEY / PDFTR_MODEL
 ```
@@ -42,7 +43,7 @@ ANTHROPIC_API_KEY=... ./pdftr translate 1706.03762 --engine api --workers 8 --bi
 |---|---|
 | `translate <输入>` | 一键入口：识别 arXiv ID，选择溯源翻译、PDF 重排或快翻 |
 | `prep` / `batches` | 切块、统计术语候选、按字数给 N 个 agent 分组 |
-| `run-api` | API 引擎并发翻译 |
+| `run-codex` / `run-api` | Codex 引擎（并发 `codex exec`）/ API 引擎并发翻译 |
 | `check` | 逐块校验结构、引用、数字和漏译 |
 | `assemble --build [--bilingual]` | 回填译文、编译中文版和中英对照版，并做成品质检 |
 | `quick` / `qa-pdf` | 快翻；对任意两个 PDF 做数字和漏译质检 |
@@ -66,6 +67,7 @@ paper-translate-zh/
 ├── scripts/
 │   ├── pdftr.py        CLI：一键入口、快翻、质检、PDF 重排工具
 │   ├── srcmode.py      溯源翻译：下载、预处理、切块、API 并行、校验、回填
+│   ├── install.sh      安装到 Claude Code / Codex
 │   └── setup.sh
 ├── templates/          翻译提示词、术语表模板、LaTeX 模板、工程配置示例
 └── examples/           1706.03762（溯源翻译）、2609.39045v1（PDF 重排）

@@ -23,6 +23,10 @@ pdftr translate <本地 PDF | arXiv ID | arXiv 链接> [--mode fine|quick] [--bi
 
 用户没有说明时用精翻；用户说“快速看看 / 粗翻 / 先出个草稿”时用快翻。
 
+## 在 Claude Code 和 Codex 中使用
+
+两者都读同样的 `SKILL.md`。运行 `scripts/install.sh [claude|codex|all]`，把本目录链接到 `~/.claude/skills/` 或 `~/.codex/skills/`。下文中的 Read、Write、Agent 等工具名按 Claude Code 写；在 Codex 中换成对应的读写文件和多 agent 能力即可。
+
 ## 最重要的原则：图不翻译
 
 - **图片一律保留原图，只翻译图注（caption）。** 包括数据图、曲线图、柱状图、框架图、截图、案例卡片、TikZ 绘图等。不要重绘图片，也不要往图里写中文。
@@ -47,7 +51,11 @@ pdftr translate <本地 PDF | arXiv ID | arXiv 链接> [--mode fine|quick] [--bi
 主 agent 按以下步骤执行：
 
 1. **定术语表**：读 `work/terms.txt` 和摘要、引言对应的块，修订 `work/glossary.md`。所有并行 agent 共用这一份，全文术语才能统一。
-2. **并行翻译**：按 `pdftr translate` / `pdftr batches <工程> --agents N` 打印的分组（按字数均衡），**在同一条消息里**用 Agent 工具同时启动 N 个子 agent（默认 6 个；块数少时相应减少）。给每个子 agent 的提示词：
+2. **并行翻译**：按 `pdftr translate` / `pdftr batches <工程> --agents N` 打印的分组（按字数均衡），同时启动 N 个子 agent（默认 6 个；块数少时相应减少）。
+   - Claude Code：**在同一条消息里**调用多次 Agent 工具。
+   - Codex：用 Codex 自带的多 agent 能力；或者直接运行 `pdftr run-codex <工程> --agents N`，它会并发启动 N 个 `codex exec` 进程，各自翻译一组并自检，结果与手动启动相同。
+
+   给每个子 agent 的提示词：
 
    > 你是论文并行翻译中的一个子 agent。1) 读翻译规则 `<skill>/templates/translate_prompt.md`（忽略其中的占位符）；2) 读术语表 `<工程>/work/glossary.md`；3) 你负责的块：`<ids>`，把 `work/chunks/src/<id>.tex` 译成中文，用 Write 写到 `work/chunks/zh/<id>.tex`（只写译文 LaTeX）；4) 运行 `<skill>/pdftr check <工程>`，只修你自己块的问题，直到通过；5) 用一两句话回报。不要改其他文件。
 
@@ -64,7 +72,8 @@ pdftr translate <本地 PDF | arXiv ID | arXiv 链接> [--mode fine|quick] [--bi
 要点：
 - 重新运行 `prep` 会按原文内容保留已有译文，可以放心调整切块大小（`--chunk`）后重来。
 - 编译失败时先看报错的文件和行号，多半是某块译文改坏了 LaTeX 结构，`check` 通常已经提示。
-- 没有 Claude 子 agent 的环境（或者想更快、更省）可以用 API 引擎：`pdftr translate <id> --engine api --workers 8`。它支持 `ANTHROPIC_API_KEY`，以及任意 OpenAI 兼容端点（`PDFTR_API_BASE` / `PDFTR_API_KEY` / `PDFTR_MODEL`），完成后自动 check、assemble、编译。
+- 三种并行引擎：`--engine agent`（默认，由当前 agent 启动子 agent）、`--engine codex`（并发 `codex exec`，命令行一条跑完）、`--engine api`。
+- 没有子 agent 的环境（或者想更快、更省）可以用 API 引擎：`pdftr translate <id> --engine api --workers 8`。它支持 `ANTHROPIC_API_KEY`，以及任意 OpenAI 兼容端点（`PDFTR_API_BASE` / `PDFTR_API_KEY` / `PDFTR_MODEL`），完成后自动 check、assemble、编译。
 
 ## 快翻（pdf2zh）
 

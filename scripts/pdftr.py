@@ -493,8 +493,9 @@ def cmd_translate(a):
         if sm.fetch(aid, proj):
             meta = sm.prepare(proj, target=a.chunk, fontset=a.fontset)
             print(f'主文件 {meta["main"]}，{len(meta["chunks"])} 块，共 {sum(c["chars"] for c in meta["chunks"])} 字符')
-            if a.engine == 'api':
-                sm.translate_api(proj, workers=a.workers)
+            if a.engine in ('api', 'codex'):
+                if a.engine == 'api': sm.translate_api(proj, workers=a.workers)
+                else: sm.translate_codex(proj, agents=a.agents, model=a.model)
                 sm.check(proj)
                 return finish(proj, a.bilingual, aid)
             return _agent_plan(proj, meta, a.agents)
@@ -538,6 +539,10 @@ def cmd_batches(a):
 
 def cmd_run_api(a):
     sm.translate_api(a.proj, workers=a.workers, only=set(a.only) if a.only else None)
+
+
+def cmd_run_codex(a):
+    sm.translate_codex(a.proj, agents=a.agents, model=a.model, only=set(a.only) if a.only else None)
 
 
 def cmd_check(a):
@@ -607,7 +612,7 @@ def cmd_quick(a):
 def cmd_qa_pdf(a): qa_pdf(a.orig, a.zh)
 
 
-SRC_CMDS = {'translate', 'prep', 'batches', 'run-api', 'check', 'assemble', 'quick', 'qa-pdf'}
+SRC_CMDS = {'translate', 'prep', 'batches', 'run-api', 'run-codex', 'check', 'assemble', 'quick', 'qa-pdf'}
 
 
 # ---------------------------------------------------------------- main
@@ -631,7 +636,9 @@ def main():
     s = sub.add_parser('translate', help='一键翻译：arXiv ID / 链接 / 本地 PDF')
     s.add_argument('input'); s.add_argument('-o', '--out')
     s.add_argument('--mode', choices=['fine', 'quick'], default='fine', help='fine=精翻（默认），quick=快翻（pdf2zh）')
-    s.add_argument('--engine', choices=['agent', 'api'], default='agent', help='agent=Claude 子 agent 并行；api=直接并发调用 API')
+    s.add_argument('--engine', choices=['agent', 'api', 'codex'], default='agent',
+                   help='agent=由当前 agent（Claude Code / Codex）启动子 agent；api=并发调用 API；codex=并发启动 codex exec 进程')
+    s.add_argument('--model')
     s.add_argument('--agents', type=int, default=6); s.add_argument('--workers', type=int, default=8)
     s.add_argument('--chunk', type=int, default=3500, help='每块目标字符数')
     s.add_argument('--bilingual', action='store_true'); s.add_argument('--no-source', action='store_true')
@@ -641,6 +648,8 @@ def main():
     s.add_argument('--agents', type=int, default=6); s.add_argument('--fontset')
     s = sub.add_parser('batches'); s.add_argument('proj'); s.add_argument('--agents', type=int, default=6)
     s = sub.add_parser('run-api'); s.add_argument('proj'); s.add_argument('--workers', type=int, default=8); s.add_argument('--only', nargs='*')
+    s = sub.add_parser('run-codex'); s.add_argument('proj'); s.add_argument('--agents', type=int, default=6)
+    s.add_argument('--model'); s.add_argument('--only', nargs='*')
     s = sub.add_parser('check'); s.add_argument('proj')
     s = sub.add_parser('assemble'); s.add_argument('proj'); s.add_argument('--build', action='store_true')
     s.add_argument('--bilingual', action='store_true'); s.add_argument('--name')

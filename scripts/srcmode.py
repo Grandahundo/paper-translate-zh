@@ -383,6 +383,44 @@ def translate_api(proj, workers=8, only=None):
     print(f'{len(todo)} 块，{workers} 路并行，用时 {time.time() - t0:.0f}s')
 
 
+# ================================================================ 翻译（Codex CLI 并行引擎）
+def translate_codex(proj, agents=6, model=None, only=None):
+    """并发启动多个 `codex exec`，每个进程翻译一组块（按字数均衡）。"""
+    exe = shutil.which('codex')
+    if not exe: sys.exit('未找到 codex 命令（npm i -g @openai/codex 或 brew install codex）')
+    proj = os.path.abspath(proj)
+    work = os.path.join(proj, 'work'); cdir = os.path.join(work, 'chunks')
+    meta = json.load(open(os.path.join(work, 'manifest.json')))
+    todo = {c['id'] for c in meta['chunks']
+            if (not only or c['id'] in only) and not os.path.exists(os.path.join(cdir, 'zh', c['id'] + '.tex'))}
+    sub = dict(meta, chunks=[c for c in meta['chunks'] if c['id'] in todo])
+    groups = batches(sub, agents)
+    if not groups: print('没有待翻译的块'); return
+    rules = open(os.path.join(SKILL_ROOT, 'templates', 'translate_prompt.md')).read().split('## 术语表')[0]
+    gl = open(os.path.join(work, 'glossary.md')).read()
+    logs = os.path.join(work, 'codex_logs'); os.makedirs(logs, exist_ok=True)
+    t0 = time.time()
+
+    def run(i, ids):
+        files = '\n'.join(f'- work/chunks/src/{x}.tex  →  work/chunks/zh/{x}.tex' for x in ids)
+        prompt = (f"你是论文并行翻译中的一个子 agent。当前目录是翻译工程。\n\n{rules}\n## 术语表\n\n{gl}\n\n"
+                  f"## 你的任务\n逐个读取下列源文件，按上面的规则翻译，把译文（只有 LaTeX，不要代码块和说明）写到对应路径：\n{files}\n"
+                  f"写完后运行 `{SKILL_ROOT}/pdftr check {proj}`，只修你自己负责的块的问题。不要改其他文件。")
+        cmd = [exe, 'exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '--ephemeral',
+               '-C', proj, '-o', os.path.join(logs, f'agent{i}.txt')]
+        if model: cmd += ['-m', model]
+        r = subprocess.run(cmd + ['-'], input=prompt, capture_output=True, text=True)
+        done = [x for x in ids if os.path.exists(os.path.join(cdir, 'zh', x + '.tex'))]
+        return i, ids, done, r.returncode
+
+    with cf.ThreadPoolExecutor(len(groups)) as ex:
+        futs = [ex.submit(run, i, g) for i, g in enumerate(groups, 1)]
+        for f in cf.as_completed(futs):
+            i, ids, done, rc = f.result()
+            print(f'  codex agent {i}: {len(done)}/{len(ids)} 块完成{"" if rc == 0 else f"（退出码 {rc}，日志见 work/codex_logs/agent{i}.txt）"}')
+    print(f'{len(todo)} 块，{len(groups)} 个 codex 进程并行，用时 {time.time() - t0:.0f}s')
+
+
 # ================================================================ 校验
 CMD_KEYS = r'\\(cite[pt]?|citep|citet|ref|eqref|autoref|cref|Cref|label|url|href|footnote|item|caption|section|subsection|subsubsection|paragraph)\b'
 
